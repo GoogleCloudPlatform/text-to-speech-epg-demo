@@ -1,0 +1,263 @@
+<!-- Copyright 2020 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
+<!DOCTYPE html>
+<head>
+    <title>Google Cloud TTS: EPG Demo</title>
+
+    <link rel="stylesheet" type="text/css" href="third_party/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/custom.css">
+    <script type="text/javascript" src="third_party/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="third_party/bootstrap/bootstrap.min.js"></script>
+    <script type="text/javascript" src="third_party/popper/popper.min.js"></script>
+
+    <script>
+
+        $( document ).ready(function() {
+
+            // Load the epg-items.json file and populate the EPG
+            var epgItems = (function () {
+
+                var epgItems = null;
+                $.ajax({
+                    'async': false,
+                    'global': false,
+                    'url': "epg-items.json",
+                    'dataType': "json",
+                    'success': function (data) {
+                        epgItems = data;
+                    },
+                    'error': function (data, error) {
+                        console.log("Error loading epg-items.json: " + error)
+                    }
+                });
+                return epgItems
+
+            })(); 
+
+            // Define descriptionMap that is used for looking up the EPG Item description
+            let descriptionMap = new Map()
+
+            // Loop through all items with the epg-content-title class, and assign them a entry from epgItems. Also add the description to the descriptionMap
+            $( ".epg-content-title" ).each(function( index ) {
+                    $( this ).text(Object.keys(epgItems.epgItems[index])[0])
+                    descriptionMap[Object.keys(epgItems.epgItems[index])[0]] = Object.values(epgItems.epgItems[index])[0]
+            });
+
+            // Synthesize audio
+            $(".contains-voicable-content").on('click', function(event){
+                
+                // Get text for synthesis, and config
+                var textPayloadValue = $(this).children('.voicable-item').text();
+                var sessionKeyValue = $("#session-key").val()
+                var voiceGenderValue = $( "#voice-gender option:selected" ).text();
+                var voiceLanguageValue = $( "#voice-language option:selected" ).text();
+                var getSpeechServiceAPIEndpoint = $("#get-speech-service-api-endpoint").val()
+
+                // Make a request to the get-speech-service to retrieve the audio URL
+                $.ajax({
+                    type: "POST",
+                    url: getSpeechServiceAPIEndpoint,
+                    data: JSON.stringify({ TextPayload: textPayloadValue, SessionKey: sessionKeyValue, VoiceGender: voiceGenderValue, VoiceLanguageCode: voiceLanguageValue}),
+                    dataType: "json",
+                    // If successful, play the audio and populate the debug panel
+                    success: function(data){
+                        $("#tts-player").attr("src", data.audioURL);
+                        var audio = $("#audio-player")
+                        audio[0].pause();
+                        audio[0].load();
+                        audio[0].play(); 
+                        audio[0].oncanplaythrough = audio[0].play();
+                        $("#debug-audio-file-url").text("Link");
+                        $("#debug-audio-file-url").attr("href", data.audioURL);
+                        $("#debug-audio-file-cached").text(data.servedByCache);
+                    },
+                    // If a failure, alert the error
+                    failure: function(errMsg) {
+                        alert(errMsg);
+                    }
+                });
+
+            });
+
+            // Populate the content description when an item with the contains-item-with-description is clicked
+            $(".contains-item-with-description").on('click', function(event){
+                var title = $(this).children('.voicable-item').text();
+                var description = descriptionMap[title];
+                $('#content-description').text(description);
+            });
+
+        });
+        
+    </script>
+
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Text-to-Speech EPG Demo</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="https://github.com/benjamin-maynard/text-to-speech-epg-demo">GitHub</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://cloud.google.com/text-to-speech">Text-to-Speech Docs</a>
+            </li>
+        </div>
+      </nav>
+
+
+      <div class="container mt-4">
+          <div class="row">
+              <div class="col-12">
+                <h1>Google Cloud Electronic Program Guide Text-to-Speech Demo</h1>
+                <p class="lead">This site provides a demo of how the <a href="https://cloud.google.com/text-to-speech">Google Cloud Text-to-Speech Service</a> can be used to deliver accessible EPG (Electronic Program Guides). Any text contained in the mock EPG below (bordered in red) can be clicked, and will be synthesized by the Google Cloud Text-to-Speech Service. Once synthesized, the audio will be cached for future reuse. For more information, see the <a href="https://github.com/benjamin-maynard/text-to-speech-epg-demo/README.md">README on GitHub.</a></p>
+              </div>
+            
+          </div>
+      </div>
+
+      <div class="container reduced-margin mt-4">
+          <div class="epg-container">
+            <div class="d-flex flex-row epg-row">
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">Channel</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">13:00-14:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">14:00-15:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">15:00-16:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">16:00-17:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">17:00-18:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">18:00-19:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">19:00-20:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">20:00-21:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">21:00-22:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">22:00-23:00</span></div>
+                <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">23:00-24:00</span></div>
+            </div>
+            <div class="d-flex flex-row epg-row">
+                <div class="contains-voicable-content col-1 epg-heading d-flex justify-content-center"><span class="my-auto voicable-item">BBC One</span></div>
+                <div class="contains-voicable-content contains-item-with-description col-3 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-4 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-4 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+            </div>
+            <div class="d-flex flex-row epg-row">
+                <div class="contains-voicable-content col-1 epg-heading d-flex justify-content-center"><span class="my-auto voicable-item">BBC Two</span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-3 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+            </div>
+            <div class="d-flex flex-row epg-row">
+                <div class="contains-voicable-content col-1 epg-heading d-flex justify-content-center"><span class="my-auto voicable-item">ITV 1</span></div>
+                <div class="contains-voicable-content contains-item-with-description col-3 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-1 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-3 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+            </div>
+            <div class="d-flex flex-row epg-row"> 
+                <div class="contains-voicable-content col-1 epg-heading d-flex justify-content-center"><span class="my-auto voicable-item">Channel 4</span></div>
+                <div class="contains-voicable-content contains-item-with-description col-3 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-1 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-3 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+            </div>
+            <div class="d-flex flex-row epg-row">
+                <div class="contains-voicable-content col-1 epg-heading d-flex justify-content-center"><span class="my-auto voicable-item">Channel 5</span></div>
+                <div class="contains-voicable-content contains-item-with-description col-1 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-2 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-3 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-4 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+                <div class="contains-voicable-content contains-item-with-description col-1 schedule-item d-flex"><span class="my-auto voicable-item epg-content-title"></span></div>
+            </div>
+            <div class="d-flex flex-row description-row">
+                <div class="contains-voicable-content col-1 epg-heading d-flex justify-content-center"><span class="my-auto voicable-item">Description</span></div>
+                <div class="col-11 schedule-item d-flex description-content contains-voicable-content"><span id="content-description" class="my-auto voicable-item"> </span></div>
+            </div>
+          </div>
+      </div>
+
+      <div class="container mt-4">
+
+        <table class="table table-bordered">
+            <tr>
+                <th colspan="2">Debug / Config</th>
+            </tr>
+            <tr>
+                <th>get-speech-service Endpoint:</th>
+                <td>
+                    <input type="text" id="get-speech-service-api-endpoint" value="https://api.epg-text-to-speech.demos.maynard.io/getSpeech" class="form-control" id="session-key">
+                </td>
+            </tr>
+            <tr>
+                <th>Voice Language:</th>
+                <td><select class="custom-select" id="voice-language">
+                    <option selected="en-GB">en-GB</option>
+                    <option value="en-US">en-US</option>
+                  </select></td>
+            </tr>
+            <tr>
+                <th>Voice Gender:</th>
+                <td><select class="custom-select" id="voice-gender">
+                    <option selected="female">female</option>
+                    <option value="male">male</option>
+                    <option value="neutral">neutral</option>
+                  </select></td>
+            </tr>
+            <tr>
+                <th>Session Key:</th>
+                <td>
+                    <input type="text" class="form-control" id="session-key">
+                    <small class="text-muted">Session Key is optional, and prevents you from retrieving another users cached results when testing.</small>
+                </td>
+            </tr>
+            <tr>
+              <th>Audio File URL:</th>
+              <td><a id="debug-audio-file-url" href=""></a></td>
+            </tr>
+            <tr>
+                <th>Audio File Cached:</th>
+                <td id="debug-audio-file-cached"></td>
+            </tr>
+            <tr>
+              <th>Audio Playout:</th>
+              <td>
+                <audio id="audio-player" controls>
+                    <source id="tts-player" src="" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+              </td>
+            </tr>
+          </table>
+      
+         
+ 
+    </div>
+ 
+
+
+  
+
+
+
+</body>

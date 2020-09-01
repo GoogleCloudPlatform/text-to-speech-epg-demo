@@ -1,0 +1,53 @@
+# Copyright 2020 Google LLC
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+steps:
+    # Build the Container
+    - name: 'gcr.io/cloud-builders/docker'
+      dir: get-speech-service
+      args: ['build', '-t', 'gcr.io/$PROJECT_ID/get-speech-service:$COMMIT_SHA', '.']
+    # Push with Commit SHA as Tag
+    - name: 'gcr.io/cloud-builders/docker'
+      dir: get-speech-service
+      args: ['push', 'gcr.io/$PROJECT_ID/get-speech-service:$COMMIT_SHA']
+    # Also add the latest tag
+    - name: 'gcr.io/cloud-builders/gcloud'
+      args: [ 'container', 'images', 'add-tag', 'gcr.io/$PROJECT_ID/get-speech-service:$COMMIT_SHA', 'gcr.io/$PROJECT_ID/get-speech-service:latest' ]
+    # Deploy to Cloud Run
+    - name: 'gcr.io/cloud-builders/gcloud'
+      args:
+      - 'run'
+      - 'deploy'
+      - 'get-speech-service'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/get-speech-service:$COMMIT_SHA'
+      - '--region'
+      - 'europe-west1'
+      - '--platform'
+      - 'managed'
+      - '--concurrency'
+      - '80'
+      - '--cpu'
+      - '2'
+      - '--memory'
+      - '1Gi'
+      - '--timeout'
+      - '20s'
+      - '--max-instances'
+      - '1000'
+      - '--service-account'
+      - 'get-speech-service-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--set-env-vars'
+      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_PROJECT_NUMBER=960069189812,GCS_BUCKET_NAME=text-to-speech-epg-cache,CLOUD_CDN_SIGNING_KEY_SECRET_NAME=get-speech-service-cdn-signing-key,CLOUD_CDN_SIGNED_URL_KEY_NAME=get-speech-service-signed-url-key,CLOUD_CDN_ENDPOINT_FQDN=https://cdn.epg-text-to-speech.demos.maynard.io/'
+      - '--allow-unauthenticated'

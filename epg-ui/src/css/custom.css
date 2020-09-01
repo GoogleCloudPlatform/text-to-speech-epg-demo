@@ -1,0 +1,69 @@
+/* Copyright 2020 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. */
+.container.reduced-margin {
+    margin-left: 0vw;
+    margin-right: 0vw;
+    padding-left: 0vw;
+    padding-right: 0vw;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.epg-container {
+    border: 1px solid red;
+}
+
+.epg-heading {
+    background-color: #2F6690;
+    color: #FFFFFF;
+    text-align: center;
+    font-weight: bold;
+    height: 100%;
+    border-right: 1px solid #FFFFFF;
+    border-bottom: 1px solid #FFFFFF;
+
+}
+
+.epg-title {
+    background-color: #16425B;
+    color: #FFFFFF;
+    text-align: center;
+    font-weight: bold;
+    align-items: middle;
+    height: 100%;
+    border-right: 1px solid #FFFFFF;
+}
+
+.schedule-item {
+    background-color: #D9DCD6;
+    color: #000000;
+    border-right: 1px solid #000000;
+    border-top: 1px solid #000000;
+    height: 100%;
+    font-weight: bold;
+   
+}
+
+.epg-row {
+    height: 4rem;
+}
+
+.description-row {
+    height: 6rem;
+}
+
+.description-content {
+    background-color: #ebecf1;
+    font-weight: normal;
+}
