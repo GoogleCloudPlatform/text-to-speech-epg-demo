@@ -89,6 +89,42 @@ limitations under the License. -->
                 });
 
             });
+			
+			 // Synthesize audio
+            $("#target").on('click', function(event){
+                
+                // Get text for synthesis, and config
+                var textPayloadValue = $("#employee-name").val()
+                var sessionKeyValue = $("#session-key").val()
+                var voiceGenderValue = $( "#voice-gender option:selected" ).text();
+                var voiceLanguageValue = $( "#voice-language option:selected" ).text();
+                var getSpeechServiceAPIEndpoint = $("#get-speech-service-api-endpoint").val()
+
+                // Make a request to the get-speech-service to retrieve the audio URL
+                $.ajax({
+                    type: "POST",
+                    url: getSpeechServiceAPIEndpoint,
+                    data: JSON.stringify({ TextPayload: textPayloadValue, SessionKey: sessionKeyValue, VoiceGender: voiceGenderValue, VoiceLanguageCode: voiceLanguageValue}),
+                    dataType: "json",
+                    // If successful, play the audio and populate the debug panel
+                    success: function(data){
+                        $("#tts-player").attr("src", data.audioURL);
+                        var audio = $("#audio-player")
+                        audio[0].pause();
+                        audio[0].load();
+                        audio[0].play(); 
+                        audio[0].oncanplaythrough = audio[0].play();
+                        $("#debug-audio-file-url").text("Link");
+                        $("#debug-audio-file-url").attr("href", data.audioURL);
+                        $("#debug-audio-file-cached").text(data.servedByCache);
+                    },
+                    // If a failure, alert the error
+                    failure: function(errMsg) {
+                        alert(errMsg);
+                    }
+                });
+
+            });
 
             // Populate the content description when an item with the contains-item-with-description is clicked
             $(".contains-item-with-description").on('click', function(event){
@@ -106,7 +142,7 @@ limitations under the License. -->
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Text-to-Speech EPG Demo</a>
+        <a class="navbar-brand" href="#">Demo</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -116,12 +152,6 @@ limitations under the License. -->
             <li class="nav-item active">
               <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="https://github.com/benjamin-maynard/text-to-speech-epg-demo">GitHub</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="https://cloud.google.com/text-to-speech">Text-to-Speech Docs</a>
-            </li>
         </div>
       </nav>
 
@@ -129,14 +159,15 @@ limitations under the License. -->
       <div class="container mt-4">
           <div class="row">
               <div class="col-12">
-                <h1>Google Cloud Electronic Program Guide Text-to-Speech Demo</h1>
-                <p class="lead">This site provides a demo of how the <a href="https://cloud.google.com/text-to-speech">Google Cloud Text-to-Speech Service</a> can be used to deliver accessible EPG (Electronic Program Guides). Any text contained in the mock EPG below (bordered in red) can be clicked, and will be synthesized by the Google Cloud Text-to-Speech Service. Once synthesized, the audio will be cached for future reuse. For more information, see the <a href="https://github.com/benjamin-maynard/text-to-speech-epg-demo/README.md">README on GitHub.</a></p>
+                <h1>Name Pronunciation Demo</h1>
+                <p class="lead">This site provides a demo of Name Pronounciation</a></p>
               </div>
             
           </div>
       </div>
 
-      <div class="container reduced-margin mt-4">
+      <!--
+	  <div class="container reduced-margin mt-4">
           <div class="epg-container">
             <div class="d-flex flex-row epg-row">
                 <div class="contains-voicable-content col-1 epg-title d-flex justify-content-center"><span class="my-auto voicable-item">Channel</span></div>
@@ -196,12 +227,19 @@ limitations under the License. -->
             </div>
           </div>
       </div>
+	  -->
 
       <div class="container mt-4">
 
         <table class="table table-bordered">
             <tr>
-                <th colspan="2">Debug / Config</th>
+                <th colspan="2"><center><button id="target">  Click here to test </button></center></th>
+            </tr>
+			<tr>
+                <th>Employee Name:</th>
+                <td>
+                    <input type="text" id="employee-name" value="Manoj" class="form-control" id="session-key">
+                </td>
             </tr>
             <tr>
                 <th>get-speech-service Endpoint:</th>
